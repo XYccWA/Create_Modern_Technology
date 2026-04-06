@@ -19,7 +19,8 @@ public class ModernTechnologyBlocks {
                     .mapColor(MapColor.COLOR_GREEN)
                     .strength(2.0f)
                     .requiresCorrectToolForDrops(),
-                    200
+                    200,500,1000,
+                    100000,1000000
             ));
 
     public static void register(IEventBus eventBus) {

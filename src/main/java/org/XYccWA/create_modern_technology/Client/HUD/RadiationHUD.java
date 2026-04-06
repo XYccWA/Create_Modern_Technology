@@ -88,7 +88,7 @@ public class RadiationHUD {
         gui.drawString(mc.font, "§c☢ 辐射系统 §r", x, y + 2, 0xFF5555);
 
         // 玩家累积辐射值
-        String radText = "累积: " + radiation + " / 500";
+        String radText = "累积: " + radiation + " / 1000";
         int color = getRadiationColor(radiation);
         gui.drawString(mc.font, radText, x, y + 14, color);
 

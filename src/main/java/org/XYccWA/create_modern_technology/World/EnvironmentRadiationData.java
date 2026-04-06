@@ -15,8 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EnvironmentRadiationData extends SavedData {
     private final Map<BlockPos, Integer> radiationMap = new ConcurrentHashMap<>();
 
-    public static final int RADIATION_SOURCE_RADIUS = 16;
-    public static final int SOURCE_BASE_STRENGTH = 100;
+    public static final int MIN_RADIATION_RADIUS = 4;      // 最小辐射范围（强度<16时）
+    public static final int MAX_RADIATION_RADIUS = 128;    // 最大辐射范围（性能限制）
 
     public int getRadiationAt(BlockPos pos) {
         return radiationMap.getOrDefault(pos, 0);
@@ -38,9 +38,39 @@ public class EnvironmentRadiationData extends SavedData {
 
     public void removeSource(BlockPos pos) {
         radiationMap.entrySet().removeIf(entry ->
-                entry.getKey().distSqr(pos) <= RADIATION_SOURCE_RADIUS * RADIATION_SOURCE_RADIUS
+                entry.getKey().distSqr(pos) <= getDynamicRadius(100) * getDynamicRadius(100)
         );
         setDirty();
+    }
+
+    /**
+     * 根据辐射源强度计算动态辐射范围
+     * @param sourceStrength 辐射源强度 (0-100000)
+     * @return 辐射范围（格数）
+     */
+    public static int getDynamicRadius(int sourceStrength) {
+        if (sourceStrength <= 0) return 0;
+
+        // 公式: 半径 = floor(sqrt(源强度))
+        // 强度 100 → 半径 10
+        // 强度 1000 → 半径 31
+        // 强度 10000 → 半径 100
+        // 强度 100000 → 半径 316（限制到最大范围）
+        int radius = (int) Math.sqrt(sourceStrength);
+
+        // 应用最小和最大限制
+        radius = Math.max(MIN_RADIATION_RADIUS, radius);
+        radius = Math.min(MAX_RADIATION_RADIUS, radius);
+
+        return radius;
+    }
+
+    /**
+     * 获取某个位置受单个辐射源影响的强度（带动态范围）
+     */
+    public static int calculateIntensity(int sourceStrength, double distance, int maxRadius) {
+        if (distance > maxRadius) return 0;
+        return (int) (sourceStrength / (distance * distance + 1));
     }
 
     @Override

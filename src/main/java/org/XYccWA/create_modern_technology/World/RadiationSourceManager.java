@@ -14,11 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RadiationSourceManager extends SavedData {
 
-    // 存储所有辐射源的位置和强度
     private final Map<BlockPos, Integer> radiationSources = new ConcurrentHashMap<>();
 
     public void addSource(BlockPos pos, int strength) {
-        radiationSources.put(pos, strength);
+        radiationSources.put(pos, Math.min(100000, Math.max(0, strength)));
         setDirty();
     }
 
@@ -43,70 +42,98 @@ public class RadiationSourceManager extends SavedData {
     }
 
     /**
-     * 增量更新：只更新受影响的区域（变化位置周围半径内的所有位置）
+     * 增量更新：只更新受影响的区域
+     * @param level 世界
+     * @param changedPos 变化的位置
+     * @param isAdding true=添加辐射源, false=移除辐射源
      */
     public void updateAffectedArea(Level level, BlockPos changedPos, boolean isAdding) {
         EnvironmentRadiationData envData = EnvironmentRadiationData.get(level);
-        int radius = EnvironmentRadiationData.RADIATION_SOURCE_RADIUS;
 
-        // 只更新变化位置周围半径内的区域
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
+        if (!hasSources()) {
+            // 没有辐射源了，清空所有环境辐射数据
+            envData.clearAll();
+            return;
+        }
+
+        // 获取当前所有辐射源的最大强度（用于计算更新范围）
+        int maxStrength = getMaxStrength();
+        int maxRadius = EnvironmentRadiationData.getDynamicRadius(maxStrength);
+
+        // 如果是移除操作，需要额外扩大更新范围（因为要清除原有辐射数据）
+        int updateRadius = maxRadius;
+        if (!isAdding) {
+            // 移除时，需要覆盖原辐射源可能的最大范围（假设原强度可能很高）
+            // 使用全局最大范围 128 确保完全清除
+            updateRadius = Math.max(maxRadius, 128);
+        }
+
+        // 更新受影响区域
+        for (int dx = -updateRadius; dx <= updateRadius; dx++) {
+            for (int dy = -updateRadius; dy <= updateRadius; dy++) {
+                for (int dz = -updateRadius; dz <= updateRadius; dz++) {
                     BlockPos targetPos = changedPos.offset(dx, dy, dz);
                     recalculateSinglePosition(level, targetPos, envData);
                 }
             }
         }
 
-        // 标记数据已更改
         envData.setDirty();
     }
 
     /**
-     * 重新计算单个位置的辐射强度
+     * 重新计算单个位置的辐射强度（考虑所有辐射源及其动态范围）
      */
     private void recalculateSinglePosition(Level level, BlockPos pos, EnvironmentRadiationData envData) {
-        int totalIntensity = 0;
-        int radius = EnvironmentRadiationData.RADIATION_SOURCE_RADIUS;
+        if (!hasSources()) {
+            envData.setRadiationAt(pos, 0);
+            return;
+        }
 
-        // 遍历所有辐射源，计算对当前位置的影响
+        long totalIntensity = 0;
+
+        // 遍历所有辐射源
         for (Map.Entry<BlockPos, Integer> source : radiationSources.entrySet()) {
             BlockPos sourcePos = source.getKey();
             int sourceStrength = source.getValue();
 
             double distance = Math.sqrt(sourcePos.distSqr(pos));
-            if (distance <= radius) {
-                totalIntensity += (int) (sourceStrength / (distance * distance + 1));
-            }
+            int maxRadius = EnvironmentRadiationData.getDynamicRadius(sourceStrength);
+
+            // 超出该辐射源的范围则跳过
+            if (distance > maxRadius) continue;
+
+            totalIntensity += (int) (sourceStrength / (distance * distance + 1));
         }
 
-        // 应用叠加上限（最高源强度的1.3倍）
-        if (totalIntensity > 0) {
+        int finalIntensity = (int) Math.min(Integer.MAX_VALUE, totalIntensity);
+
+        if (finalIntensity > 0) {
             int maxSourceStrength = getMaxStrength();
             int cap = (int)(maxSourceStrength * 1.3);
-            totalIntensity = Math.min(cap, totalIntensity);
-            envData.setRadiationAt(pos, totalIntensity);
+            finalIntensity = Math.min(cap, finalIntensity);
+            envData.setRadiationAt(pos, finalIntensity);
         } else {
             envData.setRadiationAt(pos, 0);
         }
     }
 
     /**
-     * 完整重建整个辐射场（用于调试或特殊情况）
+     * 完整重建整个辐射场（使用动态范围）
      */
     public void fullRebuild(Level level) {
+        EnvironmentRadiationData envData = EnvironmentRadiationData.get(level);
+
         if (radiationSources.isEmpty()) {
-            EnvironmentRadiationData.get(level).clearAll();
+            envData.clearAll();
             return;
         }
 
-        EnvironmentRadiationData envData = EnvironmentRadiationData.get(level);
-        int radius = EnvironmentRadiationData.RADIATION_SOURCE_RADIUS;
-
-        // 收集所有需要更新的位置（所有辐射源影响范围的并集）
         Set<BlockPos> allAffectedPositions = new HashSet<>();
-        for (BlockPos sourcePos : radiationSources.keySet()) {
+        for (Map.Entry<BlockPos, Integer> source : radiationSources.entrySet()) {
+            BlockPos sourcePos = source.getKey();
+            int radius = EnvironmentRadiationData.getDynamicRadius(source.getValue());
+
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dy = -radius; dy <= radius; dy++) {
                     for (int dz = -radius; dz <= radius; dz++) {
@@ -117,7 +144,6 @@ public class RadiationSourceManager extends SavedData {
             }
         }
 
-        // 重新计算每个位置
         for (BlockPos pos : allAffectedPositions) {
             recalculateSinglePosition(level, pos, envData);
         }
