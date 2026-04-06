@@ -9,7 +9,7 @@ import net.minecraftforge.network.PacketDistributor;
 
 public class RadiationCapability implements IRadiation, INBTSerializable<CompoundTag> {
     private int radiation = 0;
-    private static final int MAX_RADIATION = 500;
+    private static final int MAX_RADIATION = 1000;
 
     // 持有该能力的玩家（用于同步）
     private ServerPlayer player;

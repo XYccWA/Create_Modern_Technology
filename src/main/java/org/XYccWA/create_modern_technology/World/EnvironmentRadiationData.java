@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EnvironmentRadiationData extends SavedData {
     private final Map<BlockPos, Integer> radiationMap = new ConcurrentHashMap<>();
 
-    public static final int RADIATION_SOURCE_RADIUS = 12;  // 减小半径提高性能
+    public static final int RADIATION_SOURCE_RADIUS = 16;
     public static final int SOURCE_BASE_STRENGTH = 100;
 
     public int getRadiationAt(BlockPos pos) {
@@ -31,31 +31,9 @@ public class EnvironmentRadiationData extends SavedData {
         setDirty();
     }
 
-    /**
-     * 清除指定位置及其影响范围内的所有辐射数据
-     */
-    public void clearRadiationAround(BlockPos center, int radius) {
-        int radiusSq = radius * radius;
-        radiationMap.entrySet().removeIf(entry -> {
-            BlockPos pos = entry.getKey();
-            return pos.distSqr(center) <= radiusSq;
-        });
-        setDirty();
-    }
-
-    /**
-     * 完全清除所有辐射数据（调试用）
-     */
     public void clearAll() {
         radiationMap.clear();
         setDirty();
-    }
-
-    /**
-     * 获取指定位置是否有辐射
-     */
-    public boolean hasRadiationAt(BlockPos pos) {
-        return radiationMap.containsKey(pos);
     }
 
     public void removeSource(BlockPos pos) {
@@ -87,9 +65,7 @@ public class EnvironmentRadiationData extends SavedData {
             CompoundTag entry = list.getCompound(i);
             BlockPos pos = NbtUtils.readBlockPos(entry.getCompound("pos"));
             int intensity = entry.getInt("intensity");
-            if (intensity > 0) {
-                data.radiationMap.put(pos, intensity);
-            }
+            data.radiationMap.put(pos, intensity);
         }
         return data;
     }

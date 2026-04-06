@@ -54,7 +54,7 @@ public class RadiationHUD {
         // 查找玩家周围最近的有效辐射值
         // 由于环境辐射是按每个方块位置存储的，我们需要找最近的记录
         int nearestRadiation = 0;
-        int searchRadius = 16;
+        int searchRadius = 1;
 
         for (int dx = -searchRadius; dx <= searchRadius; dx++) {
             for (int dz = -searchRadius; dz <= searchRadius; dz++) {
