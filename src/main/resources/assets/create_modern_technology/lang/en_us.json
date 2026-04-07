@@ -1,0 +1,25 @@
+{
+  "itemGroup.create_modern_technology.creative_tab": "Modern Technology",
+
+  "block.create_modern_technology.radiation_source": "Radiation Source",
+  "item.create_modern_technology.radiation_source_block": "Radiation Source",
+
+  "item.create_modern_technology.aluminum_ingot": "Aluminum Ingot",
+  "item.create_modern_technology.nickel_ingot": "Nickel Ingot",
+  "item.create_modern_technology.tin_ingot": "Tin Ingot",
+  "item.create_modern_technology.cobalt_ingot": "Cobalt Ingot",
+  "item.create_modern_technology.lead_ingot": "Lead Ingot",
+
+  "item.create_modern_technology.steel_ingot": "Steel Ingot",
+  "item.create_modern_technology.stainless_steel_ingot": "Stainless Steel Ingot",
+  "item.create_modern_technology.aluminum_alloy_ingot": "Aluminum Alloy Ingot",
+  "item.create_modern_technology.nickel_based_alloy_ingot": "Nickel-based Alloy Ingot",
+  "item.create_modern_technology.cobalt_based_alloy_ingot": "Cobalt-based Alloy Ingot",
+
+  "item.create_modern_technology.chromite_ore": "Chromite Ore",
+  "item.create_modern_technology.cryolite_ore": "Cryolite Ore",
+  "item.create_modern_technology.bauxite_ore": "Bauxite Ore",
+
+  "death.attack.radiation": "%1$s was killed by radiation",
+  "death.attack.radiation.player": "%1$s was killed by radiation while fighting %2$s"
+}

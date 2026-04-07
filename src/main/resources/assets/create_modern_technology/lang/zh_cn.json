@@ -1,0 +1,25 @@
+{
+  "itemGroup.create_modern_technology.creative_tab": "现代科技",
+
+  "block.create_modern_technology.radiation_source": "辐射源",
+  "item.create_modern_technology.radiation_source_block": "辐射源",
+
+  "item.create_modern_technology.aluminum_ingot": "铝锭",
+  "item.create_modern_technology.nickel_ingot": "镍锭",
+  "item.create_modern_technology.tin_ingot": "锡锭",
+  "item.create_modern_technology.cobalt_ingot": "钴锭",
+  "item.create_modern_technology.lead_ingot": "铅锭",
+
+  "item.create_modern_technology.steel_ingot": "钢锭",
+  "item.create_modern_technology.stainless_steel_ingot": "不锈钢锭",
+  "item.create_modern_technology.aluminum_alloy_ingot": "铝合金锭",
+  "item.create_modern_technology.nickel_based_alloy_ingot": "镍基合金锭",
+  "item.create_modern_technology.cobalt_based_alloy_ingot": "钴基合金锭",
+
+  "item.create_modern_technology.chromite_ore": "铬铁矿",
+  "item.create_modern_technology.cryolite_ore": "冰晶石矿",
+  "item.create_modern_technology.bauxite_ore": "铝土矿",
+
+  "death.attack.radiation": "%1$s 被辐射致死",
+  "death.attack.radiation.player": "%1$s 在与 %2$s 战斗时被辐射致死"
+}
