@@ -31,6 +31,9 @@ public class ModernTechnologyItems {
     public static final RegistryObject<Item> BAUXITE_ORE = ITEMS.register("bauxite_ore", () -> new Item(new Item.Properties().stacksTo(200)));
 
 
+    //工具
+
+
 
 
 
