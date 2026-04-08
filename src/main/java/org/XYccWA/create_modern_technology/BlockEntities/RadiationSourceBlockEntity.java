@@ -210,7 +210,7 @@ public class RadiationSourceBlockEntity extends BlockEntity {
         } else {
             RadiationSourceManager.get(level).removeSource(worldPosition);
         }
-        RadiationSourceManager.get(level).updateAffectedArea(level, worldPosition, adjustedStrength > 0);
+        RadiationSourceManager.get(level).updateAffectedAreaIncremental(level, worldPosition, adjustedStrength > 0);
     }
 
     public void startCriticalTimer() {

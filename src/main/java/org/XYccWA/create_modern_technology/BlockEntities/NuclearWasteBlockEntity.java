@@ -90,7 +90,7 @@ public class NuclearWasteBlockEntity extends BlockEntity {
         } else {
             RadiationSourceManager.get(level).addSource(worldPosition, currentRadiation);
         }
-        RadiationSourceManager.get(level).updateAffectedArea(level, worldPosition, currentRadiation > 0);
+        RadiationSourceManager.get(level).updateAffectedAreaIncremental(level, worldPosition, currentRadiation > 0);
     }
 
     public int getCurrentRadiation() {

@@ -115,8 +115,11 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                 level.setBlockEntity(be);
             }
             int strength = getCurrentStrength(state);
-            RadiationSourceManager.get(level).addSource(pos, strength);
-            RadiationSourceManager.get(level).updateAffectedArea(level, pos, true);
+
+            // 使用异步更新
+            RadiationSourceManager manager = RadiationSourceManager.get(level);
+            manager.addSource(pos, strength);
+            manager.updateAffectedAreaAsync(level, pos, true);
         }
     }
 
@@ -124,8 +127,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
-            RadiationSourceManager.get(level).removeSource(pos);
-            RadiationSourceManager.get(level).updateAffectedArea(level, pos, false);
+            // 使用异步更新
+            RadiationSourceManager manager = RadiationSourceManager.get(level);
+            manager.removeSource(pos);
+            manager.updateAffectedAreaAsync(level, pos, false);
         }
     }
 
@@ -183,10 +188,11 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                 tile.startCriticalTimer();
             }
 
-            int newStrength = getCurrentStrength(newState);
+            int strength = getCurrentStrength(newState);
+            // 使用异步更新
             RadiationSourceManager manager = RadiationSourceManager.get(level);
-            manager.addSource(pos, newStrength);
-            manager.updateAffectedArea(level, pos, true);
+            manager.addSource(pos, strength);
+            manager.updateAffectedAreaAsync(level, pos, true);
         }
     }
 

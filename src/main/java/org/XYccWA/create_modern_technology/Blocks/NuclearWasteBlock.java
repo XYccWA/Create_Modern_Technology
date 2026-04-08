@@ -62,7 +62,7 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
             }
             // 注册辐射
             RadiationSourceManager.get(level).addSource(pos, getCurrentRadiationStrength(level, pos));
-            RadiationSourceManager.get(level).updateAffectedArea(level, pos, true);
+            RadiationSourceManager.get(level).updateAffectedAreaIncremental(level, pos, true);
         }
     }
 
@@ -71,7 +71,7 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
             RadiationSourceManager.get(level).removeSource(pos);
-            RadiationSourceManager.get(level).updateAffectedArea(level, pos, false);
+            RadiationSourceManager.get(level).updateAffectedAreaIncremental(level, pos, false);
         }
     }
 

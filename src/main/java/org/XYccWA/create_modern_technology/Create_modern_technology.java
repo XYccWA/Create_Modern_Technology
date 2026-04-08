@@ -24,6 +24,7 @@ import org.XYccWA.create_modern_technology.Items.ModernTechnologyCeativeModeTab;
 import org.XYccWA.create_modern_technology.Items.ModernTechnologyItems;
 import org.XYccWA.create_modern_technology.Network.EnvironmentRadiationSyncPacket;
 import org.XYccWA.create_modern_technology.Network.RadiationSyncPacket;
+import org.XYccWA.create_modern_technology.Radiation.RadiationThreadPool;
 import org.slf4j.Logger;
 
 
@@ -51,6 +52,8 @@ public class Create_modern_technology {
         //创造模式物品栏
         ModernTechnologyCeativeModeTab.register(modEventBus);
 //        ModernTechnologySounds.register(modEventBus);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(RadiationThreadPool::shutdown));
 
         // 注册网络
         modEventBus.addListener(this::setup);
