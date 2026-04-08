@@ -4,6 +4,21 @@
   "block.create_modern_technology.radiation_source": "辐射源",
   "item.create_modern_technology.radiation_source_block": "辐射源",
 
+  "block.create_modern_technology.radioactive_uranium_fission_waste_block": "放射性铀裂变废料块",
+  "item.create_modern_technology.radioactive_uranium_fission_waste_block": "放射性铀裂变废料块",
+
+  "block.create_modern_technology.uranium_fission_scrap_block": "铀裂变废料块",
+  "item.create_modern_technology.uranium_fission_scrap_block": "铀裂变废料块",
+
+  "block.create_modern_technology.uranium_fuel_block": "铀燃料块",
+  "item.create_modern_technology.uranium_fuel_block": "铀燃料块",
+
+  "block.create_modern_technology.radioactive_nuclear_waste": "放射性核废料",
+  "item.create_modern_technology.radioactive_nuclear_waste": "放射性核废料",
+
+  "block.create_modern_technology.nuclear_waste": "核废料",
+  "item.create_modern_technology.nuclear_waste": "核废料",
+
   "item.create_modern_technology.aluminum_ingot": "铝锭",
   "item.create_modern_technology.nickel_ingot": "镍锭",
   "item.create_modern_technology.tin_ingot": "锡锭",

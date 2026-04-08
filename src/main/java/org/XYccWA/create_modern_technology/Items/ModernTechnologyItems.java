@@ -43,8 +43,13 @@ public class ModernTechnologyItems {
 
 
 
-    //DEBUG
-    public static final RegistryObject<Item> RADIATION_SOURCE_BLOCK = ITEMS.register("radiation_source_block", () -> new BlockItem(ModernTechnologyBlocks.RADIATION_SOURCE.get(), new Item.Properties()));
+    // 方块物品
+    public static final RegistryObject<Item> RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK_ITEM = ITEMS.register("radioactive_uranium_fission_waste_block", () -> new BlockItem(ModernTechnologyBlocks.RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> URANIUM_FISSION_SCRAP_BLOCK_ITEM = ITEMS.register("uranium_fission_scrap_block", () -> new BlockItem(ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> URANIUM_FUEL_BLOCK_ITEM = ITEMS.register("uranium_fuel_block", () -> new BlockItem(ModernTechnologyBlocks.URANIUM_FUEL_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> RADIOACTIVE_NUCLEAR_WASTE_ITEM = ITEMS.register("radioactive_nuclear_waste", () -> new BlockItem(ModernTechnologyBlocks.RADIOACTIVE_NUCLEAR_WASTE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> NUCLEAR_WASTE_ITEM = ITEMS.register("nuclear_waste", () -> new BlockItem(ModernTechnologyBlocks.NUCLEAR_WASTE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> RADIATION_SOURCE_BLOCK_ITEM = ITEMS.register("radiation_source_block", () -> new BlockItem(ModernTechnologyBlocks.RADIATION_SOURCE.get(), new Item.Properties()));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

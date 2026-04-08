@@ -4,6 +4,21 @@
   "block.create_modern_technology.radiation_source": "Radiation Source",
   "item.create_modern_technology.radiation_source_block": "Radiation Source",
 
+  "block.create_modern_technology.radioactive_uranium_fission_waste_block": "Radioactive Uranium Fission Waste Block",
+  "item.create_modern_technology.radioactive_uranium_fission_waste_block": "Radioactive Uranium Fission Waste Block",
+
+  "block.create_modern_technology.uranium_fission_scrap_block": "Uranium Fission Scrap Block",
+  "item.create_modern_technology.uranium_fission_scrap_block": "Uranium Fission Scrap Block",
+
+  "block.create_modern_technology.uranium_fuel_block": "Uranium Fuel Block",
+  "item.create_modern_technology.uranium_fuel_block": "Uranium Fuel Block",
+
+  "block.create_modern_technology.radioactive_nuclear_waste": "Radioactive Nuclear Waste",
+  "item.create_modern_technology.radioactive_nuclear_waste": "Radioactive Nuclear Waste",
+
+  "block.create_modern_technology.nuclear_waste": "Nuclear Waste",
+  "item.create_modern_technology.nuclear_waste": "Nuclear Waste",
+
   "item.create_modern_technology.aluminum_ingot": "Aluminum Ingot",
   "item.create_modern_technology.nickel_ingot": "Nickel Ingot",
   "item.create_modern_technology.tin_ingot": "Tin Ingot",

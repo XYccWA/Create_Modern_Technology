@@ -102,9 +102,7 @@ public class RadiationThreadPool {
      * 执行单个更新（在后台线程中）
      */
     private static void executeUpdate(Level level, BlockPos pos, boolean isAdding, int strength) {
-        // 注意：这里不能直接操作 Minecraft 对象，只能计算数据
-        // 实际的环境辐射更新需要在主线程执行
-        // 所以我们只做轻量级的计算，然后提交到主线程
+
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(
                 new RadiationUpdateEvent(level, pos, isAdding, strength)
         );
