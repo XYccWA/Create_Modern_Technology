@@ -30,14 +30,14 @@ import java.util.List;
 public class RadiationSourceBlock extends Block implements EntityBlock {
 
     // 辐射状态枚举
-    public enum RadiationState implements StringRepresentable {
+    public static enum RadiationState implements StringRepresentable {
         NORMAL("normal"),
         EXCITED("excited"),
         CRITICAL("critical");
 
         private final String name;
 
-        RadiationState(String name) {
+        private RadiationState(String name) {
             this.name = name;
         }
 
@@ -53,16 +53,23 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     private final int criticalStrength;
 
     // 燃料配置
-    private final int maxFuel;           // 最大燃料量
-    private final int normalConsumption; // 普通态消耗速率（每 tick）
-    private final int excitedConsumption; // 激发态消耗速率（每 tick）
-    private final Block nuclearWasteBlock;  // 燃料耗尽后转换的核废料
+    private final int maxFuel;
+    private final int normalConsumption;
+    private final int excitedConsumption;
 
-    // 修改构造函数
+    // 核废料配置
+    private final Block nuclearWasteBlock;
+
+    // 临界态超时时间（tick）
+    private final int criticalOverheatTime;
+
+    /**
+     * 完整构造函数
+     */
     public RadiationSourceBlock(Properties properties,
                                 int normalStrength, int excitedStrength, int criticalStrength,
                                 int maxFuel, int normalConsumption, int excitedConsumption,
-                                Block nuclearWasteBlock) {
+                                Block nuclearWasteBlock, int criticalOverheatTime) {
         super(properties);
         this.normalStrength = Math.min(100000, Math.max(0, normalStrength));
         this.excitedStrength = Math.min(100000, Math.max(0, excitedStrength));
@@ -71,20 +78,9 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         this.normalConsumption = Math.max(0, normalConsumption);
         this.excitedConsumption = Math.max(0, excitedConsumption);
         this.nuclearWasteBlock = nuclearWasteBlock;
+        this.criticalOverheatTime = Math.max(20, criticalOverheatTime);  // 至少1秒
         this.registerDefaultState(this.stateDefinition.any().setValue(STATE, RadiationState.NORMAL));
     }
-
-    // 简化构造函数
-    public RadiationSourceBlock(Properties properties, int normalStrength, int excitedStrength, int criticalStrength) {
-        this(properties, normalStrength, excitedStrength, criticalStrength, 10000, 1, 5, null);
-    }
-
-    public RadiationSourceBlock(Properties properties) {
-        this(properties, 100, 1000, 10000, 10000, 1, 5, null);
-    }
-
-    // Getter
-    public Block getNuclearWasteBlock() { return nuclearWasteBlock; }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -94,7 +90,7 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new RadiationSourceBlockEntity(pos, state, maxFuel, normalConsumption, excitedConsumption);
+        return new RadiationSourceBlockEntity(pos, state, maxFuel, normalConsumption, excitedConsumption, criticalOverheatTime);
     }
 
     @Nullable
@@ -114,7 +110,6 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
-            // 确保 BlockEntity 存在
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
@@ -137,25 +132,13 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
-            // 手持物品时显示燃料信息
-            if (hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
-                if (level.getBlockEntity(pos) instanceof RadiationSourceBlockEntity tile) {
-                    int fuel = tile.getFuel();
-                    player.displayClientMessage(
-                            Component.literal("§7燃料剩余: " + fuel + " / " + maxFuel + "  §7(" + (fuel * 100 / maxFuel) + "%)"),
-                            true
-                    );
-                }
-                return InteractionResult.SUCCESS;
-            }
-            cycleState(level, pos, state, player);
+            cycleState(level, pos, state);
         }
         return InteractionResult.SUCCESS;
     }
 
-    public void cycleState(Level level, BlockPos pos, BlockState state ,Player player) {
+    public void cycleState(Level level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof RadiationSourceBlockEntity tile) {
-            // 临界态时如果燃料不足，不能切换到临界态
             RadiationState current = state.getValue(STATE);
             RadiationState next;
 
@@ -164,7 +147,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                     if (tile.getFuel() >= 100) {
                         next = RadiationState.EXCITED;
                     } else {
-                        player.displayClientMessage(Component.literal("§c燃料不足，无法进入激发态"), true);
+                        if (level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false) != null) {
+                            level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false)
+                                    .displayClientMessage(Component.literal("§c燃料不足，无法进入激发态"), true);
+                        }
                         return;
                     }
                 }
@@ -172,7 +158,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                     if (tile.getFuel() >= 1000) {
                         next = RadiationState.CRITICAL;
                     } else {
-                        player.displayClientMessage(Component.literal("§c燃料不足，无法进入临界态"), true);
+                        if (level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false) != null) {
+                            level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false)
+                                    .displayClientMessage(Component.literal("§c燃料不足，无法进入临界态"), true);
+                        }
                         return;
                     }
                 }
@@ -190,7 +179,6 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
             BlockState newState = state.setValue(STATE, targetState);
             level.setBlock(pos, newState, 3);
 
-            // 如果是临界态，开始计时
             if (targetState == RadiationState.CRITICAL && level.getBlockEntity(pos) instanceof RadiationSourceBlockEntity tile) {
                 tile.startCriticalTimer();
             }
@@ -215,6 +203,8 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public int getExcitedStrength() { return excitedStrength; }
     public int getCriticalStrength() { return criticalStrength; }
     public int getMaxFuel() { return maxFuel; }
+    public Block getNuclearWasteBlock() { return nuclearWasteBlock; }
+    public int getCriticalOverheatTime() { return criticalOverheatTime; }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
@@ -223,6 +213,7 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         int normalRadius = EnvironmentRadiationData.getDynamicRadius(normalStrength);
         int excitedRadius = EnvironmentRadiationData.getDynamicRadius(excitedStrength);
         int criticalRadius = EnvironmentRadiationData.getDynamicRadius(criticalStrength);
+        int overheatSeconds = criticalOverheatTime / 20;
 
         tooltip.add(Component.literal("§7三态辐射源").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.literal(""));
@@ -231,9 +222,11 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         tooltip.add(Component.literal("  §c临界态§r: " + criticalStrength + " 强度 / " + criticalRadius + " 格范围"));
         tooltip.add(Component.literal(""));
         tooltip.add(Component.literal("§7燃料容量: " + maxFuel));
-        tooltip.add(Component.literal("§7消耗速率: 普通态 " + normalConsumption + "/tick, 激发态 " + excitedConsumption + "/tick"));
+        tooltip.add(Component.literal("§7消耗速率: 普通态 " + normalConsumption + "/秒, 激发态 " + excitedConsumption + "/秒"));
+        tooltip.add(Component.literal("§c临界态超时: " + overheatSeconds + " 秒后爆炸"));
         tooltip.add(Component.literal(""));
-        tooltip.add(Component.literal("右键点击切换状态").withStyle(ChatFormatting.YELLOW));
-        tooltip.add(Component.literal("空手右键查看燃料").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("§7中子反应特性:").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("  §7周围6个方块的中子截面 ≥ 0.8 → 激发态"));
+        tooltip.add(Component.literal("  §7周围6个方块的中子截面 ≥ 1.0 → 临界态"));
     }
 }

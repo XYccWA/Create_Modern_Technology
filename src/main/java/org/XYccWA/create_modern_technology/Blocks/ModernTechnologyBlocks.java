@@ -18,10 +18,10 @@ public class ModernTechnologyBlocks {
 
 
 
-    public static final RegistryObject<Block> RADIOACTIVE_NUCLEAR_WASTE = BLOCKS.register("radioactive_nuclear_waste",() -> new Block(BlockBehaviour.Properties.of()));
+    public static final RegistryObject<Block> RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK = BLOCKS.register("radioactive_uranium_fission_waste_block",() -> new Block(BlockBehaviour.Properties.of()));
 
 
-    public static final RegistryObject<Block> NUCLEAR_WASTE = BLOCKS.register("nuclear_waste",
+    public static final RegistryObject<Block> URANIUM_FISSION_SCRAP_BLOCK = BLOCKS.register("nuclear_waste",
             () -> new NuclearWasteBlock(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_GREEN)
@@ -29,21 +29,19 @@ public class ModernTechnologyBlocks {
                             .lightLevel(state -> 4),
                     20,           // 初始辐射强度
                     0.03,           // 每天衰变3%（半衰期约23天）
-                    RADIOACTIVE_NUCLEAR_WASTE.get()
+                    RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
             ));
 
 
-
-    public static final RegistryObject<Block> RADIATION_SOURCE = BLOCKS.register("radiation_source",
+    public static final RegistryObject<Block> URANIUM_FUEL_BLOCK = BLOCKS.register("uranium_fuel_block",
             () -> new RadiationSourceBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0f),
-                    50,    // 普通态强度
-                    500,    // 激发态强度
-                    20000,   // 临界态强度
-                    500000,   // 最大燃料
-                    1,      // 普通态消耗（每 tick）
-                    10,      // 激发态消耗（每 tick）
-                    NUCLEAR_WASTE.get() // 裂变产物
+                    10, 100, 500,
+                    50000,
+                    2,
+                    10,
+                    ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(),
+                    200
             ));
 
 

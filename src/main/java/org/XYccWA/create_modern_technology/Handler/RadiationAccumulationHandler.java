@@ -25,7 +25,7 @@ public class RadiationAccumulationHandler {
     private static final int RADIATION_CHECK_INTERVAL = 20;
     private static final int DECAY_INTERVAL = 20;
     private static final float DECAY_RATE = 0.5f;
-    private static final int SYNC_INTERVAL = 20;
+    private static final int SYNC_INTERVAL = 5;
 
     private static final int MAX_RADIATION = 1000;
 
