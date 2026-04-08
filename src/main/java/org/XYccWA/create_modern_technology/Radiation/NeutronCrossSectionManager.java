@@ -34,10 +34,10 @@ public class NeutronCrossSectionManager {
                     return 0.15;
                 }
                 if (status == RadiationSourceBlock.RadiationState.CRITICAL) {
-                    return 1.0;
+                    return 2.0;
                 }
             }
-            return 0.0; // 其他状态默认 0
+            return 0.0;
         });
     }
 
