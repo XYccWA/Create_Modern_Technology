@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.util.StringRepresentable;
 import org.XYccWA.create_modern_technology.BlockEntities.RadiationSourceBlockEntity;
+import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
 import org.XYccWA.create_modern_technology.World.EnvironmentRadiationData;
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
@@ -106,31 +107,31 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         return null;
     }
 
+    // 修改 onPlace 方法
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
+            // 初始化后台线程管理器
+            RadiationUpdateThreadManager.setServerLevel(level);
+
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
             }
             int strength = getCurrentStrength(state);
-
-            // 使用异步更新
-            RadiationSourceManager manager = RadiationSourceManager.get(level);
-            manager.addSource(pos, strength);
-            manager.updateAffectedAreaAsync(level, pos, true);
+            RadiationSourceManager.get(level).addSource(pos, strength);
+            RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, strength);
         }
     }
 
+    // 修改 onRemove 方法
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
-            // 使用异步更新
-            RadiationSourceManager manager = RadiationSourceManager.get(level);
-            manager.removeSource(pos);
-            manager.updateAffectedAreaAsync(level, pos, false);
+            RadiationSourceManager.get(level).removeSource(pos);
+            RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
         }
     }
 
@@ -188,11 +189,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                 tile.startCriticalTimer();
             }
 
-            int strength = getCurrentStrength(newState);
-            // 使用异步更新
+            int newStrength = getCurrentStrength(newState);
             RadiationSourceManager manager = RadiationSourceManager.get(level);
-            manager.addSource(pos, strength);
-            manager.updateAffectedAreaAsync(level, pos, true);
+            manager.addSource(pos, newStrength);
+            manager.updateAffectedArea(level, pos, true);
         }
     }
 

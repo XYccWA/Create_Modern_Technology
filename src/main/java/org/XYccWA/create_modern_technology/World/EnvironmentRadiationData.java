@@ -15,12 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EnvironmentRadiationData extends SavedData {
     private final Map<BlockPos, Integer> radiationMap = new ConcurrentHashMap<>();
 
-    public static final int RADIATION_SOURCE_RADIUS = 16;
-    public static final int SOURCE_BASE_STRENGTH = 100000;
-
-    // 动态范围配置
-    public static final int MIN_RADIATION_RADIUS = 4;      // 最小辐射范围
-    public static final int MAX_RADIATION_RADIUS = 128;    // 最大辐射范围
+    public static final int MIN_RADIATION_RADIUS = 4;      // 最小辐射范围（强度<16时）
+    public static final int MAX_RADIATION_RADIUS = 128;    // 最大辐射范围（性能限制）
 
     public int getRadiationAt(BlockPos pos) {
         return radiationMap.getOrDefault(pos, 0);
@@ -35,9 +31,6 @@ public class EnvironmentRadiationData extends SavedData {
         setDirty();
     }
 
-    /**
-     * 清空所有环境辐射数据
-     */
     public void clearAll() {
         radiationMap.clear();
         setDirty();
@@ -45,7 +38,7 @@ public class EnvironmentRadiationData extends SavedData {
 
     public void removeSource(BlockPos pos) {
         radiationMap.entrySet().removeIf(entry ->
-                entry.getKey().distSqr(pos) <= RADIATION_SOURCE_RADIUS * RADIATION_SOURCE_RADIUS
+                entry.getKey().distSqr(pos) <= getDynamicRadius(100) * getDynamicRadius(100)
         );
         setDirty();
     }
@@ -59,6 +52,10 @@ public class EnvironmentRadiationData extends SavedData {
         if (sourceStrength <= 0) return 0;
 
         // 公式: 半径 = floor(sqrt(源强度))
+        // 强度 100 → 半径 10
+        // 强度 1000 → 半径 31
+        // 强度 10000 → 半径 100
+        // 强度 100000 → 半径 316（限制到最大范围）
         int radius = (int) Math.sqrt(sourceStrength);
 
         // 应用最小和最大限制

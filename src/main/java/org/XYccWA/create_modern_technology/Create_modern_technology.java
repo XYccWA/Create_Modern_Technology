@@ -24,7 +24,7 @@ import org.XYccWA.create_modern_technology.Items.ModernTechnologyCeativeModeTab;
 import org.XYccWA.create_modern_technology.Items.ModernTechnologyItems;
 import org.XYccWA.create_modern_technology.Network.EnvironmentRadiationSyncPacket;
 import org.XYccWA.create_modern_technology.Network.RadiationSyncPacket;
-import org.XYccWA.create_modern_technology.Radiation.RadiationThreadPool;
+import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
 import org.slf4j.Logger;
 
 
@@ -53,8 +53,6 @@ public class Create_modern_technology {
         ModernTechnologyCeativeModeTab.register(modEventBus);
 //        ModernTechnologySounds.register(modEventBus);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(RadiationThreadPool::shutdown));
-
         // 注册网络
         modEventBus.addListener(this::setup);
         // 注册能力事件
@@ -67,6 +65,11 @@ public class Create_modern_technology {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             forgeEventBus.register(RadiationHUD.class);
         });
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        RadiationUpdateThreadManager.shutdown();
     }
 
     private void setup(FMLCommonSetupEvent event) {
