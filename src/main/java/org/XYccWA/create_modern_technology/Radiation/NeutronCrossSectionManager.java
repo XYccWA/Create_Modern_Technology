@@ -23,6 +23,22 @@ public class NeutronCrossSectionManager {
     static {
         // 中子减速剂（中等截面值）
         registerBlockCrossSection("minecraft:water", 0.2);
+        registerDynamicCrossSection("create_modern_technology:uranium_fuel_block", state -> {
+            // 获取辐射源的状态
+            if (state.hasProperty(RadiationSourceBlock.STATE)) {
+                RadiationSourceBlock.RadiationState status = state.getValue(RadiationSourceBlock.STATE);
+                if (status == RadiationSourceBlock.RadiationState.NORMAL) {
+                    return 0.1;
+                }
+                if (status == RadiationSourceBlock.RadiationState.EXCITED) {
+                    return 0.15;
+                }
+                if (status == RadiationSourceBlock.RadiationState.CRITICAL) {
+                    return 4.0;
+                }
+            }
+            return 0.0;
+        });
         registerDynamicCrossSection("create_modern_technology:radiation_source", state -> {
             // 获取辐射源的状态
             if (state.hasProperty(RadiationSourceBlock.STATE)) {

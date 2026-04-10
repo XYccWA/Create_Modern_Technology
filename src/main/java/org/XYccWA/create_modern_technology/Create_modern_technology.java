@@ -51,7 +51,6 @@ public class Create_modern_technology {
         ModFluidTypes.register(modEventBus);
         //创造模式物品栏
         ModernTechnologyCeativeModeTab.register(modEventBus);
-//        ModernTechnologySounds.register(modEventBus);
 
         // 注册网络
         modEventBus.addListener(this::setup);

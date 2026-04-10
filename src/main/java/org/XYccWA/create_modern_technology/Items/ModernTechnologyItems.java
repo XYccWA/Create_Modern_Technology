@@ -45,6 +45,26 @@ public class ModernTechnologyItems {
 
 
 
+    // 方块物品 - 放射性铀裂变废料块
+    public static final RegistryObject<Item> RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK = ITEMS.register("radioactive_uranium_fission_waste_block", 
+        () -> new BlockItem(ModernTechnologyBlocks.RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get(), new Item.Properties()));
+    
+    // 方块物品 - 铀裂变废料块
+    public static final RegistryObject<Item> URANIUM_FISSION_SCRAP_BLOCK = ITEMS.register("uranium_fission_scrap_block", 
+        () -> new BlockItem(ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(), new Item.Properties()));
+    
+    // 方块物品 - 熔融铀废料
+    public static final RegistryObject<Item> MOLTEN_URANIUM_FUEL = ITEMS.register("molten_uranium_waste", 
+        () -> new BlockItem(ModernTechnologyBlocks.MOLTEN_URANIUM_FUEL.get(), new Item.Properties()));
+    
+    // 方块物品 - 铀燃料块
+    public static final RegistryObject<Item> URANIUM_FUEL_BLOCK = ITEMS.register("uranium_fuel_block", 
+        () -> new BlockItem(ModernTechnologyBlocks.URANIUM_FUEL_BLOCK.get(), new Item.Properties()));
+    
+    // 方块物品 - 熔融核废料
+    public static final RegistryObject<Item> MOLTEN_NUCLEAR_WASTE = ITEMS.register("molten_nuclear_waste", 
+        () -> new BlockItem(ModernTechnologyBlocks.MOLTEN_NUCLEAR_WASTE.get(), new Item.Properties()));
+
     //DEBUG
     public static final RegistryObject<Item> RADIATION_SOURCE_BLOCK = ITEMS.register("radiation_source_block", () -> new BlockItem(ModernTechnologyBlocks.RADIATION_SOURCE.get(), new Item.Properties()));
 

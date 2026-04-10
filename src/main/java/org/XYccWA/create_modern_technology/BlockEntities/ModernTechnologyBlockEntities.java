@@ -17,14 +17,18 @@ public class ModernTechnologyBlockEntities {
             BLOCK_ENTITIES.register("radiation_source_be",
                     () -> BlockEntityType.Builder.of(
                             (pos, state) -> new RadiationSourceBlockEntity(pos, state,100000, 10, 200,500),
-                            ModernTechnologyBlocks.RADIATION_SOURCE.get()
+                            ModernTechnologyBlocks.RADIATION_SOURCE.get(),
+                            ModernTechnologyBlocks.URANIUM_FUEL_BLOCK.get()
                     ).build(null));
 
     public static final RegistryObject<BlockEntityType<NuclearWasteBlockEntity>> NUCLEAR_WASTE_BE =
             BLOCK_ENTITIES.register("nuclear_waste_be",
                     () -> BlockEntityType.Builder.of(
                             (pos,state) -> new NuclearWasteBlockEntity(pos, state, 10000,1, ModernTechnologyBlocks.RADIOACTIVE_NUCLEAR_WASTE.get()),
-                            ModernTechnologyBlocks.NUCLEAR_WASTE.get()
+                            ModernTechnologyBlocks.NUCLEAR_WASTE.get(),
+                            ModernTechnologyBlocks.MOLTEN_NUCLEAR_WASTE.get(),
+                            ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(),
+                            ModernTechnologyBlocks.MOLTEN_URANIUM_FUEL.get()
                     ).build(null));
 
     public static void register(IEventBus eventBus) {

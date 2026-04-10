@@ -13,6 +13,12 @@
   "block.create_modern_technology.uranium_fuel_block": "铀燃料块",
   "item.create_modern_technology.uranium_fuel_block": "铀燃料块",
 
+  "block.create_modern_technology.molten_uranium_waste": "熔融铀废料",
+  "item.create_modern_technology.molten_uranium_waste": "熔融铀废料",
+
+  "block.create_modern_technology.molten_nuclear_waste": "熔融核废料",
+  "item.create_modern_technology.molten_nuclear_waste": "熔融核废料",
+
   "block.create_modern_technology.radioactive_nuclear_waste": "放射性核废料",
   "item.create_modern_technology.radioactive_nuclear_waste": "放射性核废料",
 
@@ -34,6 +40,8 @@
   "item.create_modern_technology.chromite_ore": "铬铁矿",
   "item.create_modern_technology.cryolite_ore": "冰晶石矿",
   "item.create_modern_technology.bauxite_ore": "铝土矿",
+
+  "item.create_modern_technology.geiger_counter": "盖革计数器",
 
   "death.attack.radiation": "%1$s 被辐射致死",
   "death.attack.radiation.player": "%1$s 在与 %2$s 战斗时被辐射致死"

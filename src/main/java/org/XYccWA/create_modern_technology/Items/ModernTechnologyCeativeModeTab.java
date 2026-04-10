@@ -26,7 +26,15 @@ public class ModernTechnologyCeativeModeTab {
                 output.accept(ModernTechnologyItems.ALUMINUM_ALLOY_INGOT.get());
                 output.accept(ModernTechnologyItems.NICKEL_BASED_ALLOY_INGOT.get());
                 output.accept(ModernTechnologyItems.COBALT_BASED_ALLOY_INGOT.get());
+
                 output.accept(ModernTechnologyItems.GEIGER_COUNTER.get());
+
+                // 放射性方块物品
+                output.accept(ModernTechnologyItems.RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get());
+                output.accept(ModernTechnologyItems.URANIUM_FISSION_SCRAP_BLOCK.get());
+                output.accept(ModernTechnologyItems.MOLTEN_URANIUM_FUEL.get());
+                output.accept(ModernTechnologyItems.URANIUM_FUEL_BLOCK.get());
+                output.accept(ModernTechnologyItems.MOLTEN_NUCLEAR_WASTE.get());
 
 
 

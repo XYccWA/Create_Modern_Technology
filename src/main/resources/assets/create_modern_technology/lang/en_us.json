@@ -13,6 +13,12 @@
   "block.create_modern_technology.uranium_fuel_block": "Uranium Fuel Block",
   "item.create_modern_technology.uranium_fuel_block": "Uranium Fuel Block",
 
+  "block.create_modern_technology.molten_uranium_waste": "Molten Uranium Waste",
+  "item.create_modern_technology.molten_uranium_waste": "Molten Uranium Waste",
+
+  "block.create_modern_technology.molten_nuclear_waste": "Molten Nuclear Waste",
+  "item.create_modern_technology.molten_nuclear_waste": "Molten Nuclear Waste",
+
   "block.create_modern_technology.radioactive_nuclear_waste": "Radioactive Nuclear Waste",
   "item.create_modern_technology.radioactive_nuclear_waste": "Radioactive Nuclear Waste",
 
@@ -34,6 +40,8 @@
   "item.create_modern_technology.chromite_ore": "Chromite Ore",
   "item.create_modern_technology.cryolite_ore": "Cryolite Ore",
   "item.create_modern_technology.bauxite_ore": "Bauxite Ore",
+
+  "item.create_modern_technology.geiger_counter": "Geiger Counter",
 
   "death.attack.radiation": "%1$s was killed by radiation",
   "death.attack.radiation.player": "%1$s was killed by radiation while fighting %2$s"
