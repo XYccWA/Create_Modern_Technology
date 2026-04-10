@@ -112,6 +112,7 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
+            RadiationUpdateThreadManager.setServerLevel(level);
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);

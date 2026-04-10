@@ -180,15 +180,6 @@ public class RadiationSourceBlockEntity extends BlockEntity {
                 .forEach(player -> {
                     player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f);
                 });
-
-        // 同步周围玩家
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.players().forEach(player -> {
-                if (player.blockPosition().distSqr(worldPosition) <= 128 * 128) {
-                    RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
-                }
-            });
-        }
     }
     private void convertToNuclearWaste() {
         if (level == null || cachedBlock == null) return;
