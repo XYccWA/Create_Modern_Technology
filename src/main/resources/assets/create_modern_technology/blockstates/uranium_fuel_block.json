@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create_modern_technology:block/uranium_fuel_block"
+    }
+  }
+}

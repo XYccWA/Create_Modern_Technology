@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create_modern_technology:block/radioactive_uranium_fission_waste_block"
+    }
+  }
+}

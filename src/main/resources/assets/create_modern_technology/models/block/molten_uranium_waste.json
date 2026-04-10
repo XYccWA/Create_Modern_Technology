@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "create_modern_technology:block/molten_uranium_waste"
+  }
+}
