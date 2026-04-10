@@ -32,6 +32,16 @@ public class ModernTechnologyBlocks {
                     RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
             ));
 
+    public static final RegistryObject<Block> MOLTEN_URANIUM_FUEL = BLOCKS.register("molten_uranium_waste",
+            () -> new NuclearWasteBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_GREEN)
+                            .strength(1.2f)
+                            .lightLevel(state -> 4),
+                    500,
+                    0.2,
+                    RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
+            ));
 
     public static final RegistryObject<Block> URANIUM_FUEL_BLOCK = BLOCKS.register("uranium_fuel_block",
             () -> new RadiationSourceBlock(
@@ -41,7 +51,8 @@ public class ModernTechnologyBlocks {
                     2,
                     10,
                     ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(),
-                    200
+                    200,
+                    MOLTEN_URANIUM_FUEL.get()
             ));
 
 
@@ -77,16 +88,27 @@ public class ModernTechnologyBlocks {
                     RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
             ));
 
+    public static final RegistryObject<Block> MOLTEN_NUCLEAR_WASTE = BLOCKS.register("molten_nuclear_waste",
+            () -> new NuclearWasteBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_GREEN)
+                            .strength(1.2f)
+                            .lightLevel(state -> 4),
+                    500,           // 初始辐射强度
+                    0.2,           // 每天衰变3%（半衰期约23天）
+                    RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
+            ));
 
     public static final RegistryObject<Block> RADIATION_SOURCE = BLOCKS.register("radiation_source",
             () -> new RadiationSourceBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0f),
                     10, 100, 500,
-                    20,
+                    500000,
                     2,
                     10,
-                    ModernTechnologyBlocks.NUCLEAR_WASTE.get(),
-                    200
+                    NUCLEAR_WASTE.get(),
+                    200,
+                    MOLTEN_NUCLEAR_WASTE.get()
             ));
 
     public static void register(IEventBus eventBus) {

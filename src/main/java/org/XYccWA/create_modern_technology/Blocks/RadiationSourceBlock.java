@@ -3,14 +3,9 @@ package org.XYccWA.create_modern_technology.Blocks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -24,7 +19,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.util.StringRepresentable;
 import org.XYccWA.create_modern_technology.BlockEntities.RadiationSourceBlockEntity;
 import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
-import org.XYccWA.create_modern_technology.World.EnvironmentRadiationData;
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,16 +57,20 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     // 核废料配置
     private final Block nuclearWasteBlock;
 
-    // 临界态超时时间（tick）
+    // 临界态超时时间
     private final int criticalOverheatTime;
 
+    // 新增：爆炸后生成的方块
+    private final Block explosionResultBlock;
+
     /**
-     * 完整构造函数
+     * 完整构造函数（含爆炸产物）
      */
     public RadiationSourceBlock(Properties properties,
                                 int normalStrength, int excitedStrength, int criticalStrength,
                                 int maxFuel, int normalConsumption, int excitedConsumption,
-                                Block nuclearWasteBlock, int criticalOverheatTime) {
+                                Block nuclearWasteBlock, int criticalOverheatTime,
+                                Block explosionResultBlock) {
         super(properties);
         this.normalStrength = Math.min(100000, Math.max(0, normalStrength));
         this.excitedStrength = Math.min(100000, Math.max(0, excitedStrength));
@@ -81,7 +79,8 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         this.normalConsumption = Math.max(0, normalConsumption);
         this.excitedConsumption = Math.max(0, excitedConsumption);
         this.nuclearWasteBlock = nuclearWasteBlock;
-        this.criticalOverheatTime = Math.max(20, criticalOverheatTime);  // 至少1秒
+        this.criticalOverheatTime = Math.max(20, criticalOverheatTime);
+        this.explosionResultBlock = explosionResultBlock;
         this.registerDefaultState(this.stateDefinition.any().setValue(STATE, RadiationState.NORMAL));
     }
 
@@ -109,14 +108,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         return null;
     }
 
-    // 修改 onPlace 方法
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
-            // 初始化后台线程管理器
-            RadiationUpdateThreadManager.setServerLevel(level);
-
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
@@ -131,19 +126,14 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
-            // 从辐射源管理器移除
             RadiationSourceManager.get(level).removeSource(pos);
-
-            // 添加到更新队列
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
 
-            // 关键修复：立即同步周围玩家的辐射数据
-            if (level instanceof ServerLevel serverLevel) {
+            // 同步周围玩家
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
                 serverLevel.players().forEach(player -> {
-                    // 如果玩家在影响范围内，立即同步
-                    double distance = player.blockPosition().distSqr(pos);
-                    if (distance <= 128 * 128) { // 128格范围内
-                        RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                    if (player.blockPosition().distSqr(pos) <= 128 * 128) {
+                        RadiationUpdateThreadManager.syncPlayerPosition((net.minecraft.server.level.ServerPlayer) player);
                     }
                 });
             }
@@ -207,7 +197,7 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
             int newStrength = getCurrentStrength(newState);
             RadiationSourceManager manager = RadiationSourceManager.get(level);
             manager.addSource(pos, newStrength);
-            manager.updateAffectedArea(level, pos, true);
+            RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, newStrength);
         }
     }
 
@@ -220,34 +210,13 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         };
     }
 
+    // Getters
     public int getNormalStrength() { return normalStrength; }
     public int getExcitedStrength() { return excitedStrength; }
     public int getCriticalStrength() { return criticalStrength; }
     public int getMaxFuel() { return maxFuel; }
     public Block getNuclearWasteBlock() { return nuclearWasteBlock; }
     public int getCriticalOverheatTime() { return criticalOverheatTime; }
+    public Block getExplosionResultBlock() { return explosionResultBlock; }
 
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-
-        int normalRadius = EnvironmentRadiationData.getDynamicRadius(normalStrength);
-        int excitedRadius = EnvironmentRadiationData.getDynamicRadius(excitedStrength);
-        int criticalRadius = EnvironmentRadiationData.getDynamicRadius(criticalStrength);
-        int overheatSeconds = criticalOverheatTime / 20;
-
-        tooltip.add(Component.literal("§7三态辐射源").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal(""));
-        tooltip.add(Component.literal("  §a普通态§r: " + normalStrength + " 强度 / " + normalRadius + " 格范围"));
-        tooltip.add(Component.literal("  §6激发态§r: " + excitedStrength + " 强度 / " + excitedRadius + " 格范围"));
-        tooltip.add(Component.literal("  §c临界态§r: " + criticalStrength + " 强度 / " + criticalRadius + " 格范围"));
-        tooltip.add(Component.literal(""));
-        tooltip.add(Component.literal("§7燃料容量: " + maxFuel));
-        tooltip.add(Component.literal("§7消耗速率: 普通态 " + normalConsumption + "/秒, 激发态 " + excitedConsumption + "/秒"));
-        tooltip.add(Component.literal("§c临界态超时: " + overheatSeconds + " 秒后爆炸"));
-        tooltip.add(Component.literal(""));
-        tooltip.add(Component.literal("§7中子反应特性:").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("  §7周围6个方块的中子截面 ≥ 0.8 → 激发态"));
-        tooltip.add(Component.literal("  §7周围6个方块的中子截面 ≥ 1.0 → 临界态"));
-    }
 }

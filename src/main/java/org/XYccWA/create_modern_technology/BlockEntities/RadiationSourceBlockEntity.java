@@ -1,7 +1,10 @@
 package org.XYccWA.create_modern_technology.BlockEntities;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -10,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
 import org.XYccWA.create_modern_technology.Blocks.NuclearWasteBlock;
 import org.XYccWA.create_modern_technology.Blocks.RadiationSourceBlock;
 import org.XYccWA.create_modern_technology.Radiation.NeutronCrossSectionManager;
@@ -137,13 +141,22 @@ public class RadiationSourceBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * 临界态超时爆炸
+     */
     private void explode() {
         if (level == null || isExploding) return;
         isExploding = true;
 
-        // 移除辐射源
+        // 移除当前辐射源
         RadiationSourceManager.get(level).removeSource(worldPosition);
         RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, false, 0);
+
+        // 获取爆炸产物方块
+        Block explosionResult = null;
+        if (cachedBlock != null) {
+            explosionResult = cachedBlock.getExplosionResultBlock();
+        }
 
         // 爆炸效果
         float explosionRadius = 5.0f;
@@ -152,15 +165,31 @@ public class RadiationSourceBlockEntity extends BlockEntity {
 
         level.playSound(null, worldPosition, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 2.0f, 1.0f);
 
+        // 生成爆炸产物（优先使用配置的产物，否则使用核废料）
+        if (explosionResult != null) {
+            // 使用配置的爆炸产物
+            level.setBlock(worldPosition, explosionResult.defaultBlockState(), 3);
+            if (explosionResult instanceof NuclearWasteBlock wasteBlock) {
+                RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, true, wasteBlock.getInitialRadiation());
+            }
+        }
 
-        // 造成辐射伤害
+        // 给附近玩家造成辐射伤害
         level.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
                         new net.minecraft.world.phys.AABB(worldPosition).inflate(10.0))
                 .forEach(player -> {
                     player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f);
                 });
-    }
 
+        // 同步周围玩家
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.players().forEach(player -> {
+                if (player.blockPosition().distSqr(worldPosition) <= 128 * 128) {
+                    RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                }
+            });
+        }
+    }
     private void convertToNuclearWaste() {
         if (level == null || cachedBlock == null) return;
 
