@@ -72,7 +72,7 @@ public class ModernTechnologyBlocks {
                             .mapColor(MapColor.COLOR_GREEN)
                             .strength(1.2f)
                             .lightLevel(state -> 4),
-                    20,           // 初始辐射强度
+                    200,           // 初始辐射强度
                     0.03,           // 每天衰变3%（半衰期约23天）
                     RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK.get()
             ));
@@ -82,10 +82,10 @@ public class ModernTechnologyBlocks {
             () -> new RadiationSourceBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0f),
                     10, 100, 500,
-                    50000,
+                    20,
                     2,
                     10,
-                    ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(),
+                    ModernTechnologyBlocks.NUCLEAR_WASTE.get(),
                     200
             ));
 

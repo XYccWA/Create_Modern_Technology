@@ -3,6 +3,8 @@ package org.XYccWA.create_modern_technology.Blocks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -125,13 +127,26 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         }
     }
 
-    // 修改 onRemove 方法
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
+            // 从辐射源管理器移除
             RadiationSourceManager.get(level).removeSource(pos);
+
+            // 添加到更新队列
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
+
+            // 关键修复：立即同步周围玩家的辐射数据
+            if (level instanceof ServerLevel serverLevel) {
+                serverLevel.players().forEach(player -> {
+                    // 如果玩家在影响范围内，立即同步
+                    double distance = player.blockPosition().distSqr(pos);
+                    if (distance <= 128 * 128) { // 128格范围内
+                        RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                    }
+                });
+            }
         }
     }
 

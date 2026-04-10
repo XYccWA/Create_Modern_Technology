@@ -1,11 +1,8 @@
 package org.XYccWA.create_modern_technology.Blocks;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -15,16 +12,16 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.XYccWA.create_modern_technology.BlockEntities.NuclearWasteBlockEntity;
 import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
-import org.XYccWA.create_modern_technology.World.EnvironmentRadiationData;
+import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class NuclearWasteBlock extends Block implements EntityBlock {
 
-    private final int initialRadiation;      // 初始辐射强度
-    private final double decayRatePerDay;     // 每天衰变速率
-    private final Block decayTarget;           // 衰变完成后的方块
+    private final int initialRadiation;
+    private final double decayRatePerDay;
+    private final Block decayTarget;
 
     public NuclearWasteBlock(Properties properties, int radiationStrength, double decayRatePerDay, Block decayTarget) {
         super(properties);
@@ -33,7 +30,6 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
         this.decayTarget = decayTarget;
     }
 
-    // 添加 getter 方法
     public int getInitialRadiation() {
         return initialRadiation;
     }
@@ -69,11 +65,17 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
+            // 确保 BlockEntity 存在
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
             }
-            RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, getCurrentRadiationStrength(level, pos));
+
+            // 关键修复：注册到辐射源管理器
+            RadiationSourceManager.get(level).addSource(pos, initialRadiation);
+
+            // 添加到更新队列
+            RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, initialRadiation);
         }
     }
 
@@ -81,7 +83,20 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
+            // 从辐射源管理器移除
+            RadiationSourceManager.get(level).removeSource(pos);
+            // 添加到更新队列
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
+            // 关键修复：立即同步周围玩家的辐射数据
+            if (level instanceof ServerLevel serverLevel) {
+                serverLevel.players().forEach(player -> {
+                    // 如果玩家在影响范围内，立即同步
+                    double distance = player.blockPosition().distSqr(pos);
+                    if (distance <= 128 * 128) { // 128格范围内
+                        RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                    }
+                });
+            }
         }
     }
 
@@ -90,22 +105,5 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
             return be.getCurrentRadiation();
         }
         return initialRadiation;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-
-        int radius = EnvironmentRadiationData.getDynamicRadius(initialRadiation);
-        int halfLifeDays = (int) Math.ceil(0.693 / decayRatePerDay);
-
-        tooltip.add(Component.literal("§7核废料").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal(""));
-        tooltip.add(Component.literal("  §a辐射强度: " + initialRadiation + " / 范围 " + radius + " 格"));
-        tooltip.add(Component.literal("  §e衰变速率: " + (int)(decayRatePerDay * 100) + "%/天"));
-        tooltip.add(Component.literal("  §7半衰期: 约 " + halfLifeDays + " 天"));
-        if (decayTarget != null) {
-            tooltip.add(Component.literal("  §7衰变产物: " + decayTarget.getName().getString()));
-        }
     }
 }

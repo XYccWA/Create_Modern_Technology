@@ -26,6 +26,7 @@ public class ModernTechnologyCeativeModeTab {
                 output.accept(ModernTechnologyItems.ALUMINUM_ALLOY_INGOT.get());
                 output.accept(ModernTechnologyItems.NICKEL_BASED_ALLOY_INGOT.get());
                 output.accept(ModernTechnologyItems.COBALT_BASED_ALLOY_INGOT.get());
+                output.accept(ModernTechnologyItems.GEIGER_COUNTER.get());
 
 
 

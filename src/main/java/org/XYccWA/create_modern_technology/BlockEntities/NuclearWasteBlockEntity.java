@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.XYccWA.create_modern_technology.Blocks.NuclearWasteBlock;
 import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 
@@ -19,6 +20,9 @@ public class NuclearWasteBlockEntity extends BlockEntity {
     private long lastDecayDay;
     private static final int TICKS_PER_DAY = 24000;
 
+    // 缓存方块引用
+    private NuclearWasteBlock cachedBlock = null;
+
     public NuclearWasteBlockEntity(BlockPos pos, BlockState state, int radiationStrength, double decayRatePerDay, Block decayTarget) {
         super(ModernTechnologyBlockEntities.NUCLEAR_WASTE_BE.get(), pos, state);
         this.initialRadiation = radiationStrength;
@@ -31,11 +35,18 @@ public class NuclearWasteBlockEntity extends BlockEntity {
     public void tick() {
         if (level == null || level.isClientSide) return;
 
+        // 初始化缓存
+        if (cachedBlock == null && level.getBlockState(worldPosition).getBlock() instanceof NuclearWasteBlock block) {
+            cachedBlock = block;
+        }
+
         ServerLevel serverLevel = (ServerLevel) level;
         long currentDay = serverLevel.getDayTime() / TICKS_PER_DAY;
 
         if (lastDecayDay == -1) {
             lastDecayDay = currentDay;
+            // 首次放置时确保注册到辐射源管理器
+            registerRadiationSource();
             return;
         }
 
@@ -47,7 +58,17 @@ public class NuclearWasteBlockEntity extends BlockEntity {
         }
     }
 
+    private void registerRadiationSource() {
+        if (level == null) return;
+
+        if (currentRadiation > 0) {
+            RadiationSourceManager.get(level).addSource(worldPosition, currentRadiation);
+            RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, true, currentRadiation);
+        }
+    }
+
     private void applyDecay(long daysPassed) {
+        if (level == null) return;
         if (currentRadiation <= 0) return;
 
         double remaining = currentRadiation;
@@ -68,8 +89,11 @@ public class NuclearWasteBlockEntity extends BlockEntity {
     private void completeDecay() {
         if (level == null) return;
 
+        // 移除当前辐射源
+        RadiationSourceManager.get(level).removeSource(worldPosition);
         RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, false, 0);
 
+        // 替换方块
         if (decayTarget != null) {
             level.setBlock(worldPosition, decayTarget.defaultBlockState(), 3);
         } else {
@@ -89,7 +113,13 @@ public class NuclearWasteBlockEntity extends BlockEntity {
         }
     }
 
-    public int getCurrentRadiation() { return currentRadiation; }
+    public int getCurrentRadiation() {
+        return currentRadiation;
+    }
+
+    public int getInitialRadiation() {
+        return initialRadiation;
+    }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {

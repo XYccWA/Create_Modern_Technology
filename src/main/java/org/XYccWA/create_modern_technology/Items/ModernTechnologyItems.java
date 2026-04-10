@@ -7,6 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
+import org.XYccWA.create_modern_technology.Items.Tools.GeigerCounterItem;
 
 public class ModernTechnologyItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, "create_modern_technology");
@@ -32,7 +33,8 @@ public class ModernTechnologyItems {
 
 
     //工具
-
+    public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
+            () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
 
 
 
