@@ -16,7 +16,7 @@ public class ModernTechnologyBlockEntities {
     public static final RegistryObject<BlockEntityType<RadiationSourceBlockEntity>> RADIATION_SOURCE_BE =
             BLOCK_ENTITIES.register("radiation_source_be",
                     () -> BlockEntityType.Builder.of(
-                            (pos, state) -> new RadiationSourceBlockEntity(pos, state,100000, 10, 200,500),
+                            (pos, state) -> new RadiationSourceBlockEntity(pos, state,100000, 10, 200,500,0.5,0.1,0.05),
                             ModernTechnologyBlocks.RADIATION_SOURCE.get(),
                             ModernTechnologyBlocks.URANIUM_FUEL_BLOCK.get()
                     ).build(null));

@@ -52,7 +52,10 @@ public class ModernTechnologyBlocks {
                     10,
                     ModernTechnologyBlocks.URANIUM_FISSION_SCRAP_BLOCK.get(),
                     200,
-                    MOLTEN_URANIUM_FUEL.get()
+                    MOLTEN_URANIUM_FUEL.get(),
+                    0.1,
+                    0.5,
+                    0.01
             ));
 
 
@@ -103,12 +106,15 @@ public class ModernTechnologyBlocks {
             () -> new RadiationSourceBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0f),
                     10, 100, 500,
-                    500000,
+                    1000,
                     2,
-                    10,
+                    100,
                     NUCLEAR_WASTE.get(),
                     200,
-                    MOLTEN_NUCLEAR_WASTE.get()
+                    MOLTEN_NUCLEAR_WASTE.get(),
+                    0.1,
+                    0.5,
+                    0.01
             ));
 
     public static void register(IEventBus eventBus) {
