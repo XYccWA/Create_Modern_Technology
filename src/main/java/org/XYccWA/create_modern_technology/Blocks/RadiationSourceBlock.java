@@ -7,8 +7,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -22,7 +20,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.util.StringRepresentable;
 import org.XYccWA.create_modern_technology.BlockEntities.RadiationSourceBlockEntity;
 import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
-import org.XYccWA.create_modern_technology.World.EnvironmentRadiationData;
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +54,10 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     private final int normalConsumption;
     private final int excitedConsumption;
 
-    // 燃料阈值配置（百分比）
-    private final double excitedThreshold;   // 进入激发态所需的最小燃料百分比（默认0.001 = 0.1%）
-    private final double criticalThreshold;  // 进入临界态所需的最小燃料百分比（默认0.01 = 1%）
-    private final double wasteThreshold;     // 转换为核废料的燃料百分比阈值（默认0 = 0%）
+    // 燃料阈值配置
+    private final double excitedThreshold;
+    private final double criticalThreshold;
+    private final double wasteThreshold;
 
     // 核废料配置
     private final Block nuclearWasteBlock;
@@ -94,6 +91,50 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         this.criticalThreshold = Math.min(1.0, Math.max(0.0, criticalThreshold));
         this.wasteThreshold = Math.min(1.0, Math.max(0.0, wasteThreshold));
         this.registerDefaultState(this.stateDefinition.any().setValue(STATE, RadiationState.NORMAL));
+    }
+
+    /**
+     * 构造函数（简化版）
+     */
+    public RadiationSourceBlock(Properties properties,
+                                int normalStrength, int excitedStrength, int criticalStrength,
+                                int maxFuel, int normalConsumption, int excitedConsumption,
+                                Block nuclearWasteBlock, int criticalOverheatTime,
+                                Block explosionResultBlock) {
+        this(properties, normalStrength, excitedStrength, criticalStrength,
+                maxFuel, normalConsumption, excitedConsumption,
+                nuclearWasteBlock, criticalOverheatTime, explosionResultBlock,
+                0.001, 0.01, 0.0);
+    }
+
+    /**
+     * 构造函数（无爆炸产物）
+     */
+    public RadiationSourceBlock(Properties properties,
+                                int normalStrength, int excitedStrength, int criticalStrength,
+                                int maxFuel, int normalConsumption, int excitedConsumption,
+                                Block nuclearWasteBlock, int criticalOverheatTime) {
+        this(properties, normalStrength, excitedStrength, criticalStrength,
+                maxFuel, normalConsumption, excitedConsumption,
+                nuclearWasteBlock, criticalOverheatTime, null,
+                0.001, 0.01, 0.0);
+    }
+
+    /**
+     * 简化构造函数
+     */
+    public RadiationSourceBlock(Properties properties, int normalStrength, int excitedStrength, int criticalStrength) {
+        this(properties, normalStrength, excitedStrength, criticalStrength,
+                10000, 1, 5, null, 600, null,
+                0.001, 0.01, 0.0);
+    }
+
+    /**
+     * 默认构造函数
+     */
+    public RadiationSourceBlock(Properties properties) {
+        this(properties, 100, 1000, 10000, 10000, 1, 5, null, 600, null,
+                0.001, 0.01, 0.0);
     }
 
     @Override
@@ -150,6 +191,28 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                 });
             }
         }
+    }
+
+    /**
+     * 挖掘时的爆炸逻辑
+     * 激发态或临界态挖掘时直接触发临界爆炸
+     */
+    @Override
+    public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
+        if (!level.isClientSide && blockEntity instanceof RadiationSourceBlockEntity tile) {
+            RadiationState currentState = state.getValue(STATE);
+
+            // 激发态或临界态挖掘时触发爆炸
+            if (currentState == RadiationState.EXCITED || currentState == RadiationState.CRITICAL) {
+                // 触发爆炸
+                tile.explodeOnMine();
+                // 不调用 super，因为爆炸会处理方块移除
+                return;
+            }
+        }
+
+        // 普通态正常掉落
+        super.playerDestroy(level, player, pos, state, blockEntity, tool);
     }
 
     @Override

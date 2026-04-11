@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
 import org.XYccWA.create_modern_technology.Blocks.NuclearWasteBlock;
 import org.XYccWA.create_modern_technology.Blocks.RadiationSourceBlock;
 import org.XYccWA.create_modern_technology.Radiation.NeutronCrossSectionManager;
@@ -28,9 +29,9 @@ public class RadiationSourceBlockEntity extends BlockEntity {
     private final int excitedConsumption;
 
     // 燃料阈值
-    private final double excitedThreshold;   // 进入激发态所需的最小燃料百分比
-    private final double criticalThreshold;  // 进入临界态所需的最小燃料百分比
-    private final double wasteThreshold;     // 转换为核废料的燃料百分比阈值
+    private final double excitedThreshold;
+    private final double criticalThreshold;
+    private final double wasteThreshold;
 
     // 临界态计时
     private int criticalTimer;
@@ -98,7 +99,7 @@ public class RadiationSourceBlockEntity extends BlockEntity {
             criticalOverheatTimer = 0;
         }
 
-        // 燃料耗尽转换（根据配置的阈值）
+        // 燃料耗尽转换
         double fuelPercent = (double) fuel / maxFuel;
         if (fuelPercent <= wasteThreshold && currentState != RadiationSourceBlock.RadiationState.CRITICAL) {
             if (cachedBlock != null && cachedBlock.getNuclearWasteBlock() != null) {
@@ -142,12 +143,73 @@ public class RadiationSourceBlockEntity extends BlockEntity {
             if (currentState != targetState) {
                 double fuelPercent = (double) fuel / maxFuel;
 
-                // 根据燃料阈值检查是否可以切换
                 if (targetState == RadiationSourceBlock.RadiationState.EXCITED && fuelPercent < excitedThreshold) return;
                 if (targetState == RadiationSourceBlock.RadiationState.CRITICAL && fuelPercent < criticalThreshold) return;
 
                 block.setState(level, worldPosition, targetState);
             }
+        }
+    }
+
+    /**
+     * 挖掘时触发的爆炸（激发态或临界态挖掘时调用）
+     */
+    public void explodeOnMine() {
+        if (level == null || isExploding) return;
+        isExploding = true;
+
+        // 移除辐射源
+        RadiationSourceManager.get(level).removeSource(worldPosition);
+        RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, false, 0);
+
+        // 获取爆炸产物
+        Block explosionResult = null;
+        if (cachedBlock != null) {
+            explosionResult = cachedBlock.getExplosionResultBlock();
+        }
+
+        // 爆炸效果
+        float explosionRadius = 5.0f;
+        level.explode(null, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
+                explosionRadius, Level.ExplosionInteraction.TNT);
+
+        level.playSound(null, worldPosition, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 2.0f, 1.0f);
+
+        // 生成爆炸产物
+        if (explosionResult != null) {
+            level.setBlock(worldPosition, explosionResult.defaultBlockState(), 3);
+
+            if (explosionResult instanceof NuclearWasteBlock wasteBlock) {
+                RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, true, wasteBlock.getInitialRadiation());
+            } else if (explosionResult instanceof RadiationSourceBlock) {
+                int strength = ((RadiationSourceBlock) explosionResult).getCurrentStrength(explosionResult.defaultBlockState());
+                RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, true, strength);
+            }
+        } else if (cachedBlock != null && cachedBlock.getNuclearWasteBlock() != null) {
+            Block nuclearWaste = cachedBlock.getNuclearWasteBlock();
+            level.setBlock(worldPosition, nuclearWaste.defaultBlockState(), 3);
+
+            if (nuclearWaste instanceof NuclearWasteBlock wasteBlock) {
+                RadiationUpdateThreadManager.queueRadiationUpdate(worldPosition, true, wasteBlock.getInitialRadiation());
+            }
+        } else {
+            level.removeBlock(worldPosition, false);
+        }
+
+        // 给附近玩家造成辐射伤害
+        level.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
+                        new net.minecraft.world.phys.AABB(worldPosition).inflate(10.0))
+                .forEach(player -> {
+                    player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f);
+                });
+
+        // 同步周围玩家
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.players().forEach(player -> {
+                if (player.blockPosition().distSqr(worldPosition) <= 128 * 128) {
+                    RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                }
+            });
         }
     }
 
