@@ -1,10 +1,12 @@
 package org.XYccWA.create_modern_technology.Blocks;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -23,18 +25,16 @@ import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManage
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class RadiationSourceBlock extends Block implements EntityBlock {
 
-    public static enum RadiationState implements StringRepresentable {
+    public enum RadiationState implements StringRepresentable {
         NORMAL("normal"),
         EXCITED("excited"),
         CRITICAL("critical");
 
         private final String name;
 
-        private RadiationState(String name) {
+        RadiationState(String name) {
             this.name = name;
         }
 
@@ -43,6 +43,12 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     }
 
     public static final EnumProperty<RadiationState> STATE = EnumProperty.create("state", RadiationState.class);
+
+    // NBT 键名
+    public static final String NBT_FUEL = "radiation_fuel";
+    public static final String NBT_STATE = "radiation_state";
+    public static final String NBT_CRITICAL_TIMER = "radiation_critical_timer";
+    public static final String NBT_OVERHEAT_TIMER = "radiation_overheat_timer";
 
     // 三态辐射强度配置
     private final int normalStrength;
@@ -93,50 +99,6 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
         this.registerDefaultState(this.stateDefinition.any().setValue(STATE, RadiationState.NORMAL));
     }
 
-    /**
-     * 构造函数（简化版）
-     */
-    public RadiationSourceBlock(Properties properties,
-                                int normalStrength, int excitedStrength, int criticalStrength,
-                                int maxFuel, int normalConsumption, int excitedConsumption,
-                                Block nuclearWasteBlock, int criticalOverheatTime,
-                                Block explosionResultBlock) {
-        this(properties, normalStrength, excitedStrength, criticalStrength,
-                maxFuel, normalConsumption, excitedConsumption,
-                nuclearWasteBlock, criticalOverheatTime, explosionResultBlock,
-                0.001, 0.01, 0.0);
-    }
-
-    /**
-     * 构造函数（无爆炸产物）
-     */
-    public RadiationSourceBlock(Properties properties,
-                                int normalStrength, int excitedStrength, int criticalStrength,
-                                int maxFuel, int normalConsumption, int excitedConsumption,
-                                Block nuclearWasteBlock, int criticalOverheatTime) {
-        this(properties, normalStrength, excitedStrength, criticalStrength,
-                maxFuel, normalConsumption, excitedConsumption,
-                nuclearWasteBlock, criticalOverheatTime, null,
-                0.001, 0.01, 0.0);
-    }
-
-    /**
-     * 简化构造函数
-     */
-    public RadiationSourceBlock(Properties properties, int normalStrength, int excitedStrength, int criticalStrength) {
-        this(properties, normalStrength, excitedStrength, criticalStrength,
-                10000, 1, 5, null, 600, null,
-                0.001, 0.01, 0.0);
-    }
-
-    /**
-     * 默认构造函数
-     */
-    public RadiationSourceBlock(Properties properties) {
-        this(properties, 100, 1000, 10000, 10000, 1, 5, null, 600, null,
-                0.001, 0.01, 0.0);
-    }
-
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(STATE);
@@ -166,10 +128,12 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
-            if (level.getBlockEntity(pos) == null) {
-                BlockEntity be = newBlockEntity(pos, state);
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be == null) {
+                be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
             }
+
             int strength = getCurrentStrength(state);
             RadiationSourceManager.get(level).addSource(pos, strength);
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, strength);
@@ -178,24 +142,23 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
             RadiationSourceManager.get(level).removeSource(pos);
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
 
-            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            if (level instanceof ServerLevel serverLevel) {
                 serverLevel.players().forEach(player -> {
                     if (player.blockPosition().distSqr(pos) <= 128 * 128) {
-                        RadiationUpdateThreadManager.syncPlayerPosition((net.minecraft.server.level.ServerPlayer) player);
+                        RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
                     }
                 });
             }
         }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     /**
-     * 挖掘时的爆炸逻辑
-     * 激发态或临界态挖掘时直接触发临界爆炸
+     * 挖掘时保存 NBT 到掉落物
      */
     @Override
     public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
@@ -204,15 +167,63 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
 
             // 激发态或临界态挖掘时触发爆炸
             if (currentState == RadiationState.EXCITED || currentState == RadiationState.CRITICAL) {
-                // 触发爆炸
                 tile.explodeOnMine();
-                // 不调用 super，因为爆炸会处理方块移除
                 return;
             }
+
+            // 普通态：掉落带有 NBT 的物品
+            ItemStack dropStack = new ItemStack(this.asItem());
+            CompoundTag tag = new CompoundTag();
+            tag.putInt(NBT_FUEL, tile.getFuel());
+            tag.putString(NBT_STATE, currentState.getSerializedName());
+            tag.putInt(NBT_CRITICAL_TIMER, tile.getCriticalTimer());
+            tag.putInt(NBT_OVERHEAT_TIMER, tile.getCriticalOverheatTimer());
+            dropStack.setTag(tag);
+
+            // 掉落物品
+            popResource(level, pos, dropStack);
+
+            // 移除方块
+            level.removeBlock(pos, false);
+            return;
         }
 
-        // 普通态正常掉落
         super.playerDestroy(level, player, pos, state, blockEntity, tool);
+    }
+
+    /**
+     * 放置时从物品 NBT 恢复数据
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+
+        if (!level.isClientSide) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof RadiationSourceBlockEntity tile && stack.hasTag()) {
+                CompoundTag tag = stack.getTag();
+                if (tag.contains(NBT_FUEL)) {
+                    tile.setFuel(tag.getInt(NBT_FUEL));
+                }
+                if (tag.contains(NBT_CRITICAL_TIMER)) {
+                    tile.setCriticalTimer(tag.getInt(NBT_CRITICAL_TIMER));
+                }
+                if (tag.contains(NBT_OVERHEAT_TIMER)) {
+                    tile.setCriticalOverheatTimer(tag.getInt(NBT_OVERHEAT_TIMER));
+                }
+                if (tag.contains(NBT_STATE)) {
+                    String stateName = tag.getString(NBT_STATE);
+                    RadiationState targetState = switch (stateName) {
+                        case "excited" -> RadiationState.EXCITED;
+                        case "critical" -> RadiationState.CRITICAL;
+                        default -> RadiationState.NORMAL;
+                    };
+                    if (targetState != RadiationState.NORMAL) {
+                        setState(level, pos, targetState);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -226,7 +237,7 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
     public void cycleState(Level level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof RadiationSourceBlockEntity tile) {
             RadiationState current = state.getValue(STATE);
-            RadiationState next;
+            RadiationState next = null;
 
             int fuel = tile.getFuel();
             double fuelPercent = (double) fuel / maxFuel;
@@ -235,23 +246,11 @@ public class RadiationSourceBlock extends Block implements EntityBlock {
                 case NORMAL -> {
                     if (fuelPercent >= excitedThreshold) {
                         next = RadiationState.EXCITED;
-                    } else {
-                        if (level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false) != null) {
-                            level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false)
-                                    .displayClientMessage(Component.literal("§c燃料不足（需要 " + (excitedThreshold * 100) + "%），无法进入激发态"), true);
-                        }
-                        return;
                     }
                 }
                 case EXCITED -> {
                     if (fuelPercent >= criticalThreshold) {
                         next = RadiationState.CRITICAL;
-                    } else {
-                        if (level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false) != null) {
-                            level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false)
-                                    .displayClientMessage(Component.literal("§c燃料不足（需要 " + (criticalThreshold * 100) + "%），无法进入临界态"), true);
-                        }
-                        return;
                     }
                 }
                 case CRITICAL -> next = RadiationState.NORMAL;

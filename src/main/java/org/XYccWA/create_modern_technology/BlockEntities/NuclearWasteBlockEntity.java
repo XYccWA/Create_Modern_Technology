@@ -121,6 +121,21 @@ public class NuclearWasteBlockEntity extends BlockEntity {
         return initialRadiation;
     }
 
+    public long getLastDecayDay() {
+        return lastDecayDay;
+    }
+
+    public void setLastDecayDay(long day) {
+        this.lastDecayDay = day;
+        setChanged();
+    }
+
+    public void setCurrentRadiation(int radiation) {
+        this.currentRadiation = Math.min(initialRadiation, Math.max(0, radiation));
+        setChanged();
+        updateRadiationField();
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);

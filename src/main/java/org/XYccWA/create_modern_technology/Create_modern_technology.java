@@ -101,10 +101,8 @@ public class Create_modern_technology {
         @SubscribeEvent
         public static void onLevelTick(TickEvent.LevelTickEvent event) {
             if (event.phase == TickEvent.Phase.END) return;
-            if (event.level.isClientSide) return;
-
-            // 每 tick 处理所有辐射源方块实体的裂变
-            // 实际处理在 RadiationSourceBlockEntity.tick 中
+            if (event.level.isClientSide) {
+            }
         }
     }
 }

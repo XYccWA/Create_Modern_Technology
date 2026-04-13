@@ -1,8 +1,10 @@
 package org.XYccWA.create_modern_technology.Blocks;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -15,9 +17,11 @@ import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManage
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class NuclearWasteBlock extends Block implements EntityBlock {
+
+    // NBT 键名
+    public static final String NBT_CURRENT_RADIATION = "waste_current_radiation";
+    public static final String NBT_LAST_DECAY_DAY = "waste_last_decay_day";
 
     private final int initialRadiation;
     private final double decayRatePerDay;
@@ -65,16 +69,11 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide) {
-            // 确保 BlockEntity 存在
             if (level.getBlockEntity(pos) == null) {
                 BlockEntity be = newBlockEntity(pos, state);
                 level.setBlockEntity(be);
             }
-
-            // 关键修复：注册到辐射源管理器
             RadiationSourceManager.get(level).addSource(pos, initialRadiation);
-
-            // 添加到更新队列
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, true, initialRadiation);
         }
     }
@@ -83,19 +82,48 @@ public class NuclearWasteBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (!level.isClientSide && !state.is(newState.getBlock())) {
-            // 从辐射源管理器移除
             RadiationSourceManager.get(level).removeSource(pos);
-            // 添加到更新队列
             RadiationUpdateThreadManager.queueRadiationUpdate(pos, false, 0);
-            // 关键修复：立即同步周围玩家的辐射数据
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.players().forEach(player -> {
-                    // 如果玩家在影响范围内，立即同步
-                    double distance = player.blockPosition().distSqr(pos);
-                    if (distance <= 128 * 128) { // 128格范围内
-                        RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
-                    }
-                });
+        }
+    }
+
+    /**
+     * 挖掘时保存 NBT 到掉落物
+     */
+    @Override
+    public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
+        if (!level.isClientSide && blockEntity instanceof NuclearWasteBlockEntity tile) {
+            ItemStack dropStack = new ItemStack(this.asItem());
+            CompoundTag tag = new CompoundTag();
+            tag.putInt(NBT_CURRENT_RADIATION, tile.getCurrentRadiation());
+            tag.putLong(NBT_LAST_DECAY_DAY, tile.getLastDecayDay());
+            dropStack.setTag(tag);
+
+            popResource(level, pos, dropStack);
+            level.removeBlock(pos, false);
+            return;
+        }
+
+        super.playerDestroy(level, player, pos, state, blockEntity, tool);
+    }
+
+    /**
+     * 放置时从物品 NBT 恢复数据
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+
+        if (!level.isClientSide) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof NuclearWasteBlockEntity tile && stack.hasTag()) {
+                CompoundTag tag = stack.getTag();
+                if (tag.contains(NBT_CURRENT_RADIATION)) {
+                    tile.setCurrentRadiation(tag.getInt(NBT_CURRENT_RADIATION));
+                }
+                if (tag.contains(NBT_LAST_DECAY_DAY)) {
+                    tile.setLastDecayDay(tag.getLong(NBT_LAST_DECAY_DAY));
+                }
             }
         }
     }

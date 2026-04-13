@@ -1,19 +1,15 @@
 package org.XYccWA.create_modern_technology.BlockEntities;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
 import org.XYccWA.create_modern_technology.Blocks.NuclearWasteBlock;
 import org.XYccWA.create_modern_technology.Blocks.RadiationSourceBlock;
 import org.XYccWA.create_modern_technology.Radiation.NeutronCrossSectionManager;
@@ -104,7 +100,6 @@ public class RadiationSourceBlockEntity extends BlockEntity {
         if (fuelPercent <= wasteThreshold && currentState != RadiationSourceBlock.RadiationState.CRITICAL) {
             if (cachedBlock != null && cachedBlock.getNuclearWasteBlock() != null) {
                 convertToNuclearWaste();
-                return;
             }
         }
     }
@@ -199,15 +194,13 @@ public class RadiationSourceBlockEntity extends BlockEntity {
         // 给附近玩家造成辐射伤害
         level.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
                         new net.minecraft.world.phys.AABB(worldPosition).inflate(10.0))
-                .forEach(player -> {
-                    player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f);
-                });
+                .forEach(player -> player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f));
 
         // 同步周围玩家
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.players().forEach(player -> {
                 if (player.blockPosition().distSqr(worldPosition) <= 128 * 128) {
-                    RadiationUpdateThreadManager.syncPlayerPosition((ServerPlayer) player);
+                    RadiationUpdateThreadManager.syncPlayerPosition(player);
                 }
             });
         }
@@ -251,9 +244,7 @@ public class RadiationSourceBlockEntity extends BlockEntity {
 
         level.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
                         new net.minecraft.world.phys.AABB(worldPosition).inflate(10.0))
-                .forEach(player -> {
-                    player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f);
-                });
+                .forEach(player -> player.hurt(org.XYccWA.create_modern_technology.Damage.RadiationDamage.cause(level), 10.0f));
 
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.players().forEach(player -> {
@@ -321,6 +312,20 @@ public class RadiationSourceBlockEntity extends BlockEntity {
     public int getCriticalOverheatTimer() { return criticalOverheatTimer; }
     public int getCriticalOverheatTime() { return criticalOverheatTime; }
     public double getFuelPercent() { return (double) fuel / maxFuel; }
+
+    public int getCriticalTimer() {
+        return criticalTimer;
+    }
+
+    public void setCriticalTimer(int timer) {
+        this.criticalTimer = timer;
+        setChanged();
+    }
+
+    public void setCriticalOverheatTimer(int timer) {
+        this.criticalOverheatTimer = timer;
+        setChanged();
+    }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
