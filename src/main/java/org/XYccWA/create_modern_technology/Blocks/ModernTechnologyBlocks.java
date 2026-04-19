@@ -1,22 +1,24 @@
 package org.XYccWA.create_modern_technology.Blocks;
 
-import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.data.SharedProperties;
+import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.XYccWA.create_modern_technology.Blocks.Nuclear.NuclearWasteBlock;
+import org.XYccWA.create_modern_technology.Blocks.Nuclear.RadiationSourceBlock;
 import org.XYccWA.create_modern_technology.Create_modern_technology;
+import org.XYccWA.create_modern_technology.Items.ModernTechnologyCeativeModeTab;
+
+import static org.XYccWA.create_modern_technology.Create_modern_technology.REGISTRATE;
 
 public class ModernTechnologyBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Create_modern_technology.MOD_ID);
-    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Create_modern_technology.MOD_ID);
-
-
-
 
     public static final RegistryObject<Block> RADIOACTIVE_URANIUM_FISSION_WASTE_BLOCK = BLOCKS.register("radioactive_uranium_fission_waste_block",() -> new Block(BlockBehaviour.Properties.of()));
 
@@ -25,7 +27,7 @@ public class ModernTechnologyBlocks {
             () -> new NuclearWasteBlock(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_GREEN)
-                            .strength(1.2f)
+                            .strength(4.0f)
                             .lightLevel(state -> 4),
                     20,           // 初始辐射强度
                     0.03,           // 每天衰变3%（半衰期约23天）

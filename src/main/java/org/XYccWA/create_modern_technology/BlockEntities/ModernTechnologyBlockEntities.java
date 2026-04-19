@@ -1,12 +1,18 @@
 package org.XYccWA.create_modern_technology.BlockEntities;
 
+import com.simibubi.create.content.fluids.pipes.TransparentStraightPipeRenderer;
+import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.XYccWA.create_modern_technology.BlockEntities.Nuclear.NuclearWasteBlockEntity;
+import org.XYccWA.create_modern_technology.BlockEntities.Nuclear.RadiationSourceBlockEntity;
 import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
 import org.XYccWA.create_modern_technology.Create_modern_technology;
+
+import static org.XYccWA.create_modern_technology.Create_modern_technology.REGISTRATE;
 
 public class ModernTechnologyBlockEntities {
 

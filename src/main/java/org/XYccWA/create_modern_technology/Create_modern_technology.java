@@ -1,6 +1,7 @@
 package org.XYccWA.create_modern_technology;
 
 import com.mojang.logging.LogUtils;
+import com.simibubi.create.foundation.data.CreateRegistrate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -16,8 +17,6 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import org.XYccWA.create_modern_technology.BlockEntities.ModernTechnologyBlockEntities;
 import org.XYccWA.create_modern_technology.Blocks.ModernTechnologyBlocks;
 import org.XYccWA.create_modern_technology.Client.HUD.RadiationHUD;
-import org.XYccWA.create_modern_technology.Fluid.ModFluidTypes;
-import org.XYccWA.create_modern_technology.Fluid.ModFluids;
 import org.XYccWA.create_modern_technology.Handler.CapabilityHandler;
 import org.XYccWA.create_modern_technology.Handler.RadiationAccumulationHandler;
 import org.XYccWA.create_modern_technology.Items.ModernTechnologyCeativeModeTab;
@@ -33,6 +32,8 @@ public class Create_modern_technology {
     public static final String MOD_ID = "create_modern_technology";
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID);
+
     private static final String PROTOCOL_VERSION = "1";
     public static SimpleChannel CHANNEL;
 
@@ -40,15 +41,13 @@ public class Create_modern_technology {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
 
+        REGISTRATE.registerEventListeners(modEventBus);
         //方块
         ModernTechnologyBlocks.register(modEventBus);
         //物品
         ModernTechnologyItems.register(modEventBus);
         //方块实体
         ModernTechnologyBlockEntities.register(modEventBus);
-        //流体
-        ModFluids.register(modEventBus);
-        ModFluidTypes.register(modEventBus);
         //创造模式物品栏
         ModernTechnologyCeativeModeTab.register(modEventBus);
 

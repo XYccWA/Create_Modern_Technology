@@ -5,7 +5,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.XYccWA.create_modern_technology.Blocks.RadiationSourceBlock;
+import org.XYccWA.create_modern_technology.Blocks.Nuclear.RadiationSourceBlock;
 
 import java.util.HashMap;
 import java.util.Map;

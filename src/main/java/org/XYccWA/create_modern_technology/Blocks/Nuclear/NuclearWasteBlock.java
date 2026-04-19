@@ -1,4 +1,4 @@
-package org.XYccWA.create_modern_technology.Blocks;
+package org.XYccWA.create_modern_technology.Blocks.Nuclear;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.XYccWA.create_modern_technology.BlockEntities.NuclearWasteBlockEntity;
+import org.XYccWA.create_modern_technology.BlockEntities.Nuclear.NuclearWasteBlockEntity;
 import org.XYccWA.create_modern_technology.Radiation.RadiationUpdateThreadManager;
 import org.XYccWA.create_modern_technology.World.RadiationSourceManager;
 import org.jetbrains.annotations.Nullable;
